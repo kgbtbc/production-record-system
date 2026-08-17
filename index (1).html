@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>生產作業紀錄系統 v2.0</title>
+<style>
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:"Microsoft JhengHei",sans-serif;background:#eef3f7;color:#102a43}
+header{background:#173f6b;color:#fff;padding:18px}
+.wrap{width:min(1180px,calc(100% - 28px));margin:auto}
+.head{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.admin{color:#fff;text-decoration:none;border:1px solid #8aa6c0;padding:10px 14px;border-radius:10px}
+.card{background:#fff;border-radius:17px;padding:20px;margin:18px 0;box-shadow:0 8px 20px rgba(23,63,107,.06)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+label{display:block;font-weight:800;margin-bottom:7px}
+input,select{display:block;max-width:100%;min-width:0;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.pick{padding:11px 16px;border:1px solid #9db3c8;border-radius:10px;background:#fff;color:#173f6b;font-weight:800}
+.pick.active{background:#173f6b;color:#fff}
+.submit{width:100%;padding:14px;border:0;border-radius:10px;background:#18834f;color:#fff;font-size:18px;font-weight:900}
+.msg{margin-top:10px;padding:10px;border-radius:8px}
+.ok{background:#e8f7ef;color:#176c47} .err{background:#fdebea;color:#9b2c2c}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap head"><h2>🏭 生產作業紀錄系統 v2.0</h2><a class="admin" href="admin.html">🔐 管理員登入</a></div></header>
+<main class="wrap">
+<form id="form">
+<div class="card"><h3>① 作業人員</h3><div class="grid">
+<div><label>工號 *</label><input id="eno" required autofocus></div>
+<div><label>姓名</label><input id="ename" readonly placeholder="輸入工號後自動帶出"></div>
+</div><div id="eh"></div></div>
+
+<div class="card"><h3>② 訂單資訊</h3><div class="grid">
+<div><label>訂單號碼 *</label><input id="orderNo" required></div>
+<div><label>機器序號（選填）</label><input id="serial"></div>
+</div></div>
+
+<div class="card"><h3>③ 作業區域與站點</h3><div class="grid">
+<div><label>作業區域 *</label><select id="area" required><option value="">請選擇</option><option>上半材料</option><option>下半材料</option></select></div>
+<div><label>作業站點 *</label><select id="station" required disabled><option value="">請先選作業區域</option></select></div>
+</div></div>
+
+<div class="card"><h3>④ 機種與加工組</h3>
+<label>機種 *</label><select id="machine" required><option value="">讀取中…</option></select>
+<div id="variantWrap" hidden style="margin-top:16px">
+<label>加工類型 *</label>
+<div class="btns"><button type="button" class="pick variant" data-v="無風扇">無風扇</button><button type="button" class="pick variant" data-v="有風扇">有風扇</button></div>
+</div>
+<div style="margin-top:16px"><label>加工組 *</label><div id="groups" class="btns">請先選機種</div></div>
+</div>
+
+<div class="card"><h3>⑤ 數量與備註</h3><div class="grid">
+<div><label>數量 *</label><input id="qty" type="number" min="1" value="1" required></div>
+<div><label>備註（選填）</label><input id="remark"></div>
+</div></div>
+
+<div class="card"><button id="submitBtn" class="submit">儲存作業紀錄</button><div id="msg" hidden></div></div>
+</form>
+</main>
+<script type="module">
+import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const sb=createClient("https://dzyfbfenghatpewumfql.supabase.co","sb_publishable_v_1RNtLKIWOgTOmc5KyT5g_yUOtq-Yy"),$=s=>document.querySelector(s);
+const stations={"上半材料":[["U-CASE",""],["LCD CASE",""],["LCD COVER",""]],"下半材料":[["L1","S070"],["L2","S080"],["MB組裝1","S090"],["MB組裝2","S100"]]};
+let variant="",group=null;
+
+async function loadMachines(){
+ const {data}=await sb.from("machine_models").select("machine_name").eq("active",true).order("machine_name");
+ $("#machine").innerHTML='<option value="">請選擇機種</option>'+(data||[]).map(r=>`<option>${r.machine_name}</option>`).join("");
+}
+loadMachines();
+
+$("#area").onchange=()=>{
+ const a=$("#area").value;$("#station").innerHTML='<option value="">請選擇站點</option>';
+ for(const [n,c] of (stations[a]||[])){const o=document.createElement("option");o.value=JSON.stringify({name:n,code:c});o.textContent=c?`${n}（${c}）`:n;$("#station").appendChild(o)}
+ $("#station").disabled=!a;
+};
+
+$("#machine").onchange=()=>{
+ variant="";group=null;document.querySelectorAll(".pick").forEach(x=>x.classList.remove("active"));
+ const rk=$("#machine").value==="RK15";$("#variantWrap").hidden=!rk;$("#groups").textContent=rk?"請先選有風扇／無風扇":"讀取中…";if(!rk)loadGroups();
+};
+
+document.querySelectorAll(".variant").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".variant").forEach(x=>x.classList.remove("active"));b.classList.add("active");variant=b.dataset.v;loadGroups();
+});
+
+async function loadGroups(){
+ let q=sb.from("process_groups").select("group_code,group_name").eq("machine_name",$("#machine").value).eq("active",true);
+ q=$("#machine").value==="RK15"?q.eq("machine_variant",variant):q.is("machine_variant",null);
+ const {data}=await q.order("sort_order").order("group_code");
+ $("#groups").innerHTML="";
+ for(const g of (data||[])){const b=document.createElement("button");b.type="button";b.className="pick";b.textContent=g.group_code;b.onclick=()=>{document.querySelectorAll("#groups .pick").forEach(x=>x.classList.remove("active"));b.classList.add("active");group=g};$("#groups").appendChild(b)}
+ if(!(data||[]).length)$("#groups").textContent="尚未建立加工組";
+}
+
+let timer;
+$("#eno").oninput=()=>{
+ clearTimeout(timer);$("#ename").value="";const no=$("#eno").value.trim();if(!no)return;
+ timer=setTimeout(async()=>{const {data}=await sb.from("employees").select("employee_name").eq("employee_no",no).eq("active",true).maybeSingle();$("#ename").value=data?data.employee_name:"";$("#eh").textContent=data?"":"查無此工號，請聯絡管理員。"},200);
+};
+
+$("#form").onsubmit=async e=>{
+ e.preventDefault();const msg=$("#msg");msg.hidden=false;
+ if(!$("#ename").value){msg.className="msg err";msg.textContent="請先確認工號";return}
+ if($("#machine").value==="RK15"&&!variant){msg.className="msg err";msg.textContent="請選有風扇或無風扇";return}
+ if(!group){msg.className="msg err";msg.textContent="請選加工組";return}
+ const s=JSON.parse($("#station").value);
+ const row={employee_no:$("#eno").value.trim(),employee_name:$("#ename").value,order_no:$("#orderNo").value.trim(),machine_serial:$("#serial").value.trim()||null,work_area:$("#area").value,station_name:s.name,station_code:s.code||null,machine_model:$("#machine").value,machine_variant:variant||null,process_group_code:group.group_code,process_group_name:group.group_name||null,processing_name:group.group_name||group.group_code,part_name:group.group_name||group.group_code,part_no:null,work_type:s.name,quantity:Number($("#qty").value),remark:$("#remark").value.trim()||null};
+ const {error}=await sb.from("work_records").insert([row]);
+ msg.className="msg "+(error?"err":"ok");
+ msg.textContent=error?error.message:`✅ 儲存成功｜${row.machine_model}${row.machine_variant?`／${row.machine_variant}`:""}｜加工組 ${row.process_group_code}｜數量 ${row.quantity}`;
+ if(!error){$("#qty").value="1";$("#remark").value=""}
+};
+</script>
+</body></html>
