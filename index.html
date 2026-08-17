@@ -11,9 +11,24 @@ header{background:#173f6b;color:#fff;padding:18px}
 .head{display:flex;justify-content:space-between;align-items:center;gap:16px}
 .admin{color:#fff;text-decoration:none;border:1px solid #8aa6c0;padding:10px 14px;border-radius:10px}
 .card{background:#fff;border-radius:17px;padding:20px;margin:18px 0;box-shadow:0 8px 20px rgba(23,63,107,.06)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-label{display:block;font-weight:800;margin-bottom:7px}
-input,select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}
+*{box-sizing:border-box}
+
+.grid{
+display:grid;
+grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+gap:16px
+}
+
+input,select{
+display:block;
+width:100%;
+max-width:100%;
+min-width:0;
+padding:12px;
+border:1px solid #cbd5e1;
+border-radius:10px;
+font:inherit;
+}
 .btns{display:flex;gap:10px;flex-wrap:wrap}
 .pick{padding:11px 16px;border:1px solid #9db3c8;border-radius:10px;background:#fff;color:#173f6b;font-weight:800}
 .pick.active{background:#173f6b;color:#fff}
