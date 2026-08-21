@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>生產作業管理中心 v2.3 前置加工管理測試版</title>
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>生產作業管理中心 v2.2 查詢加強版</title>
 
 <style>
 :root{
@@ -260,33 +260,13 @@ td:last-child,th:last-child{text-align:right}
   .search-grid{grid-template-columns:1fr}
 }
 
-
-.pre-grid{
-  display:grid;
-  grid-template-columns:1fr 160px 1fr auto;
-  gap:8px;
-  align-items:end;
-}
-.pre-item-row{
-  display:grid;
-  grid-template-columns:60px 1fr 90px 120px;
-  gap:8px;
-  align-items:center;
-}
-.pre-item-row + .pre-item-row{border-top:1px solid #e7ebef}
-.pre-item-row{padding:8px 0}
-.pre-status{font-weight:800}
-@media(max-width:760px){
-  .pre-grid,.pre-item-row{grid-template-columns:1fr}
-}
-
 </style>
 </head>
-<body><header><div class="wrap"><a href="index.html" style="display:inline-block;margin-bottom:8px;color:#fff;font-weight:800;text-decoration:none">← 返回填寫頁</a><h2>🔐 生產作業管理中心 v2.3 前置加工管理測試版</h2></div></header><main class="wrap">
+<body><header><div class="wrap"><h2>🔐 生產作業管理中心 v2.2 查詢加強版</h2></div></header><main class="wrap">
 <div id="login" class="card"><h3>管理員登入</h3><form id="lf"><input id="email" type="email" placeholder="Email" required><input id="pwd" type="password" placeholder="密碼" required style="margin-top:10px"><button class="green" style="margin-top:12px">登入</button><div id="lm"></div></form></div>
 
 <div id="app" class="card" hidden>
-<div class="tabs"><button class="tab active" data-v="stats">📊 生產統計</button><button class="tab" data-v="search">作業紀錄查詢</button><button class="tab" data-v="emp">員工管理</button><button class="tab" data-v="mach">機種管理</button><button class="tab" data-v="grp">加工組管理</button><button class="tab" data-v="pre">前置加工管理</button></div>
+<div class="tabs"><button class="tab active" data-v="stats">📊 生產統計</button><button class="tab" data-v="search">作業紀錄查詢</button><button class="tab" data-v="emp">員工管理</button><button class="tab" data-v="mach">機種管理</button><button class="tab" data-v="grp">加工組管理</button></div>
 
 <section id="stats"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h3 style="margin-bottom:4px">📊 今日生產統計</h3><div id="statsDate" class="muted"></div></div><button id="refreshStats" class="green" type="button">重新整理</button></div><div class="stats-head"><div class="stat-card"><div class="stat-label">今日總筆數</div><div id="totalRecords" class="stat-value">0 筆</div></div><div class="stat-card"><div class="stat-label">今日總數量</div><div id="totalQty" class="stat-value">0 PCS</div></div><div class="stat-card"><div class="stat-label">最後更新</div><div id="updatedAt" class="stat-value" style="font-size:22px">--:--</div></div></div><div id="machineStats"><div class="muted">統計讀取中…</div></div><div class="station-section"><h3>📍 今日站點統計</h3><div id="stationStats"><div class="muted">統計讀取中…</div></div></div></section>
 
@@ -367,43 +347,6 @@ td:last-child,th:last-child{text-align:right}
 <section id="mach" hidden><h3>機種管理</h3><form id="mf" class="grid3"><input id="mName" placeholder="機種名稱" required><select id="mActive"><option value="true">啟用</option><option value="false">停用</option></select><button class="green">新增／更新</button></form><table><thead><tr><th>機種</th><th>狀態</th><th>操作</th></tr></thead><tbody id="machBody"></tbody></table></section>
 
 <section id="grp" hidden><h3>加工組管理</h3><div class="gridg"><select id="gMachine"><option value="">請選機種</option></select><div id="gVarWrap" hidden><select id="gVar"><option value="">請選擇</option><option>無風扇</option><option>有風扇</option></select></div><button id="ae" class="green" type="button">一鍵建立 A～E</button></div><div id="gmsg"></div><table><thead><tr><th>機種</th><th>加工類型</th><th>加工組</th><th>狀態</th></tr></thead><tbody id="grpBody"></tbody></table></section>
-
-<section id="pre" hidden>
-  <h3>前置加工管理</h3>
-  <div class="notice">先選機種與站點，再維護該站點的前置加工項目。</div>
-
-  <div class="pre-grid">
-    <div>
-      <label>機種</label>
-      <select id="preMachine"><option value="">請選機種</option></select>
-    </div>
-    <div>
-      <label>站點</label>
-      <select id="preStation">
-        <option value="">請選站點</option>
-        <option value="S070">S070</option>
-        <option value="S080">S080</option>
-        <option value="S090">S090</option>
-        <option value="S100">S100</option>
-      </select>
-    </div>
-    <div>
-      <label>前置加工項目</label>
-      <input id="preName" placeholder="例如：ODU 加工">
-    </div>
-    <button id="preSave" class="green" type="button">新增項目</button>
-  </div>
-
-  <div id="preMsg" class="notice">請先選機種與站點。</div>
-
-  <div style="margin-top:12px">
-    <div class="pre-item-row" style="font-weight:900;background:#f6f8fa;padding:8px">
-      <div>順序</div><div>加工內容</div><div>狀態</div><div style="text-align:right">操作</div>
-    </div>
-    <div id="preList"></div>
-  </div>
-</section>
-
 </div>
 <div id="editBackdrop" class="modal-backdrop" hidden>
   <div class="modal">
@@ -436,7 +379,7 @@ async function loadStats(){const range=localDayRange();$("#statsDate").textConte
 $("#refreshStats").onclick=loadStats;
 async function verify(){const {data:{session}}=await sb.auth.getSession();if(!session)return;const {data}=await sb.from("admins").select("user_id,active").eq("user_id",session.user.id).eq("active",true).maybeSingle();if(data){$("#login").hidden=true;$("#app").hidden=false;loadStats();loadEmp();loadMach();loadMachineOptions()}}
 $("#lf").onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$("#email").value.trim(),password:$("#pwd").value});$("#lm").textContent=error?"登入失敗":"";if(!error)verify()};
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");["stats","search","emp","mach","grp","pre"].forEach(id=>$("#"+id).hidden=id!==b.dataset.v);if(b.dataset.v==="stats")loadStats();if(b.dataset.v==="emp")loadEmp();if(b.dataset.v==="mach")loadMach();if(b.dataset.v==="grp"){loadMachineOptions();loadGrp()} if(b.dataset.v==="pre"){loadPreMachineOptions();loadPreItems()}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");["stats","search","emp","mach","grp"].forEach(id=>$("#"+id).hidden=id!==b.dataset.v);if(b.dataset.v==="stats")loadStats();if(b.dataset.v==="emp")loadEmp();if(b.dataset.v==="mach")loadMach();if(b.dataset.v==="grp"){loadMachineOptions();loadGrp()}});
 
 let currentRecords=[];
 let editingId=null;
@@ -619,144 +562,5 @@ $("#mf").onsubmit=async e=>{e.preventDefault();await sb.from("machine_models").u
 async function loadMachineOptions(){const cur=$("#gMachine").value;const {data}=await sb.from("machine_models").select("machine_name").eq("active",true).order("machine_name");$("#gMachine").innerHTML='<option value="">請選機種</option>'+(data||[]).map(r=>`<option>${r.machine_name}</option>`).join("");if([...$("#gMachine").options].some(o=>o.value===cur))$("#gMachine").value=cur;uv()}
 function uv(){$("#gVarWrap").hidden=$("#gMachine").value!=="RK15";if($("#gMachine").value!=="RK15")$("#gVar").value=""}$("#gMachine").onchange=()=>{uv();loadGrp()};$("#gVar").onchange=loadGrp;
 async function loadGrp(){const m=$("#gMachine").value;if(!m){$("#grpBody").innerHTML="";return}if(m==="RK15"&&!$("#gVar").value){$("#grpBody").innerHTML='<tr><td colspan="4">請先選加工類型</td></tr>';return}let q=sb.from("process_groups").select("machine_name,machine_variant,group_code,active").eq("machine_name",m);q=m==="RK15"?q.eq("machine_variant",$("#gVar").value):q.is("machine_variant",null);const {data}=await q.order("sort_order");$("#grpBody").innerHTML=(data||[]).map(r=>`<tr><td>${r.machine_name}</td><td>${r.machine_variant??""}</td><td>${r.group_code}</td><td>${r.active?"啟用":"停用"}</td></tr>`).join("")}
-$("#ae").onclick=async()=>{const m=$("#gMachine").value,v=m==="RK15"?$("#gVar").value:null;if(!m){$("#gmsg").textContent="請先選機種";return}if(m==="RK15"&&!v){$("#gmsg").textContent="請先選有風扇／無風扇";return}const rows=["A","B","C","D","E"].map((c,i)=>({machine_name:m,machine_variant:v,group_code:c,sort_order:i+1,active:true}));const {error}=await sb.from("process_groups").upsert(rows,{onConflict:"machine_name,machine_variant_key,group_code"});$("#gmsg").textContent=error?error.message:"已建立 A～E";if(!error)loadGrp()};
-async function loadPreMachineOptions(){
-  const cur=$("#preMachine").value;
-  const {data,error}=await sb.from("machine_models")
-    .select("machine_name")
-    .eq("active",true)
-    .order("machine_name");
-
-  if(error){
-    $("#preMsg").textContent="機種讀取失敗："+error.message;
-    return;
-  }
-
-  $("#preMachine").innerHTML=
-    '<option value="">請選機種</option>'+
-    (data||[]).map(r=>`<option>${esc(r.machine_name)}</option>`).join("");
-
-  if([...$("#preMachine").options].some(o=>o.value===cur)){
-    $("#preMachine").value=cur;
-  }
-}
-
-async function loadPreItems(){
-  const machine=$("#preMachine").value;
-  const station=$("#preStation").value;
-
-  if(!machine || !station){
-    $("#preMsg").textContent="請先選機種與站點。";
-    $("#preList").innerHTML="";
-    return;
-  }
-
-  const {data,error}=await sb.from("preprocess_items")
-    .select("id,machine_name,station_code,item_name,sort_order,active")
-    .eq("machine_name",machine)
-    .eq("station_code",station)
-    .order("sort_order")
-    .order("id");
-
-  if(error){
-    $("#preMsg").textContent="讀取失敗："+error.message;
-    $("#preList").innerHTML="";
-    return;
-  }
-
-  $("#preMsg").textContent=`${machine}／${station}：共 ${(data||[]).length} 項`;
-
-  $("#preList").innerHTML=(data||[]).length
-    ? (data||[]).map(r=>`
-      <div class="pre-item-row">
-        <div>${r.sort_order}</div>
-        <div>${esc(r.item_name)}</div>
-        <div class="pre-status">${r.active?"啟用":"停用"}</div>
-        <div style="text-align:right">
-          <button class="small pre-edit" type="button" data-id="${r.id}" data-name="${esc(r.item_name)}">編輯</button>
-          <button class="small pre-toggle" type="button" data-id="${r.id}" data-active="${r.active}">
-            ${r.active?"停用":"啟用"}
-          </button>
-          <button class="danger pre-delete" type="button" data-id="${r.id}" style="margin-left:4px">
-            刪除
-          </button>
-        </div>
-      </div>
-    `).join("")
-    : '<div class="notice">目前尚未建立前置加工項目。</div>';
-
-  document.querySelectorAll(".pre-edit").forEach(b=>b.onclick=async()=>{
-    const oldName=b.dataset.name;
-    const newName=prompt("修改前置加工名稱：",oldName);
-    if(newName===null)return;
-    const name=newName.trim();
-    if(!name){alert("加工名稱不能空白。");return}
-    if(name===oldName)return;
-    const {error}=await sb.from("preprocess_items")
-      .update({item_name:name})
-      .eq("id",b.dataset.id);
-    if(error){alert("修改失敗："+error.message);return}
-    loadPreItems();
-  });
-
-  document.querySelectorAll(".pre-toggle").forEach(b=>b.onclick=async()=>{
-    const {error}=await sb.from("preprocess_items")
-      .update({active:b.dataset.active!=="true"})
-      .eq("id",b.dataset.id);
-    if(error){alert("更新失敗："+error.message);return}
-    loadPreItems();
-  });
-
-  document.querySelectorAll(".pre-delete").forEach(b=>b.onclick=async()=>{
-    if(!confirm("確定要刪除這個前置加工項目嗎？"))return;
-    const {error}=await sb.from("preprocess_items")
-      .delete()
-      .eq("id",b.dataset.id);
-    if(error){alert("刪除失敗："+error.message);return}
-    loadPreItems();
-  });
-}
-
-$("#preMachine").onchange=loadPreItems;
-$("#preStation").onchange=loadPreItems;
-
-$("#preSave").onclick=async()=>{
-  const machine=$("#preMachine").value;
-  const station=$("#preStation").value;
-  const name=$("#preName").value.trim();
-
-  if(!machine){$("#preMsg").textContent="請先選機種。";return}
-  if(!station){$("#preMsg").textContent="請先選站點。";return}
-  if(!name){$("#preMsg").textContent="請輸入前置加工項目。";return}
-
-  const {data:existing,error:readErr}=await sb.from("preprocess_items")
-    .select("sort_order")
-    .eq("machine_name",machine)
-    .eq("station_code",station)
-    .order("sort_order",{ascending:false})
-    .limit(1);
-
-  if(readErr){$("#preMsg").textContent="讀取失敗："+readErr.message;return}
-
-  const nextOrder=(existing&&existing.length?Number(existing[0].sort_order):0)+1;
-
-  const {error}=await sb.from("preprocess_items").insert([{
-    machine_name:machine,
-    station_code:station,
-    item_name:name,
-    sort_order:nextOrder,
-    active:true
-  }]);
-
-  if(error){
-    $("#preMsg").textContent="新增失敗："+error.message;
-    return;
-  }
-
-  $("#preName").value="";
-  loadPreItems();
-}
-
-
-verify();
+$("#ae").onclick=async()=>{const m=$("#gMachine").value,v=m==="RK15"?$("#gVar").value:null;if(!m){$("#gmsg").textContent="請先選機種";return}if(m==="RK15"&&!v){$("#gmsg").textContent="請先選有風扇／無風扇";return}const rows=["A","B","C","D","E"].map((c,i)=>({machine_name:m,machine_variant:v,group_code:c,sort_order:i+1,active:true}));const {error}=await sb.from("process_groups").upsert(rows,{onConflict:"machine_name,machine_variant_key,group_code"});$("#gmsg").textContent=error?error.message:"已建立 A～E";if(!error)loadGrp()};verify();
 </script></body></html>
