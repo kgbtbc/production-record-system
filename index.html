@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>生產作業紀錄系統｜前置加工自動連動版</title>
+<title>生產作業紀錄系統｜純前置加工版</title>
 <style>
 *{box-sizing:border-box}
 html,body{max-width:100%;overflow-x:hidden}
@@ -26,7 +26,7 @@ input,select{display:block;max-width:100%;min-width:0;width:100%;padding:12px;bo
 </style>
 </head>
 <body>
-<header><div class="wrap head"><h2>🏭 生產作業紀錄系統｜前置加工自動連動版</h2><a class="admin" href="admin.html">🔐 管理員登入</a></div></header>
+<header><div class="wrap head"><h2>🏭 生產作業紀錄系統｜純前置加工版</h2><a class="admin" href="admin.html">🔐 管理員登入</a></div></header>
 <main class="wrap">
 <form id="form">
 <div class="card"><h3>① 作業人員</h3><div class="grid">
@@ -51,7 +51,7 @@ input,select{display:block;max-width:100%;min-width:0;width:100%;padding:12px;bo
 <div class="btns"><button type="button" class="pick variant" data-v="無風扇">無風扇</button><button type="button" class="pick variant" data-v="有風扇">有風扇</button></div>
 </div>
 <div id="preprocessWrap" hidden style="margin-top:16px"><label>前置加工項目 *</label><select id="preprocess"><option value="">請選擇前置加工項目</option></select><div id="preprocessHint" style="margin-top:7px;color:#64748b"></div></div>
-<div id="groupWrap" style="margin-top:16px"><label>加工組 *</label><div id="groups" class="btns">請先選機種</div></div>
+
 </div>
 
 <div class="card"><h3>⑤ 數量與備註</h3><div class="grid">
@@ -77,7 +77,7 @@ loadMachines();
 $("#area").onchange=()=>{
  const a=$("#area").value;$("#station").innerHTML='<option value="">請選擇站點</option>';
  for(const [n,c] of (stations[a]||[])){const o=document.createElement("option");o.value=JSON.stringify({name:n,code:c});o.textContent=c?`${n}（${c}）`:n;$("#station").appendChild(o)}
- $("#station").disabled=!a;preprocessItem="";group=null;hasPreprocess=false;$("#preprocessWrap").hidden=true;$("#groupWrap").hidden=false;
+ $("#station").disabled=!a;preprocessItem="";group=null;$("#preprocessWrap").hidden=true;
 };
 
 
@@ -86,71 +86,29 @@ function usePreprocessMode(){return hasPreprocess;}
 async function loadPreprocessItems(){
  preprocessItem="";hasPreprocess=false;
  $("#preprocess").innerHTML='<option value="">讀取中…</option>';$("#preprocessHint").textContent="";
- const s=selectedStation();
- if(!$("#machine").value||!s)return false;
-
- const {data,error}=await sb.from("preprocess_items")
-   .select("item_name,sort_order")
-   .eq("machine_name",$("#machine").value)
-   .eq("station_code",s.code)
-   .eq("active",true)
-   .order("sort_order")
-   .order("item_name");
-
- if(error){
-   $("#preprocess").innerHTML='<option value="">讀取失敗</option>';
-   $("#preprocessHint").textContent=error.message;
-   return false;
- }
-
+ const s=selectedStation();if(!$("#machine").value||!s)return;
+ const {data,error}=await sb.from("preprocess_items").select("item_name,sort_order").eq("machine_name",$("#machine").value).eq("station_code",s.code).eq("active",true).order("sort_order").order("item_name");
+ $("#preprocessWrap").hidden=false;
+ if(error){$("#preprocess").innerHTML='<option value="">讀取失敗</option>';$("#preprocessHint").textContent=error.message;return}
  hasPreprocess=!!(data||[]).length;
- if(!hasPreprocess){
-   $("#preprocess").innerHTML='<option value="">尚未建立前置加工項目</option>';
-   return false;
- }
-
- $("#preprocess").innerHTML='<option value="">請選擇前置加工項目</option>'+
-   (data||[]).map(r=>{const o=document.createElement("option");o.value=r.item_name;o.textContent=r.item_name;return o.outerHTML}).join("");
- $("#preprocessHint").textContent=`目前共有 ${(data||[]).length} 項前置加工`;
- return true;
+ $("#preprocess").innerHTML='<option value="">請選擇前置加工項目</option>'+(data||[]).map(r=>{const o=document.createElement("option");o.value=r.item_name;o.textContent=r.item_name;return o.outerHTML}).join("");
+ $("#preprocessHint").textContent=hasPreprocess?`目前共有 ${(data||[]).length} 項前置加工`:"此機種／站點尚未建立前置加工項目";
 }
-
 async function refreshWorkMode(){
  group=null;preprocessItem="";hasPreprocess=false;
  document.querySelectorAll(".pick").forEach(x=>x.classList.remove("active"));
-
- const found=await loadPreprocessItems();
- $("#preprocessWrap").hidden=!found;
- $("#groupWrap").hidden=found;
-
- if(found){
-   variant="";
-   $("#variantWrap").hidden=true;
-   return;
- }
-
- const rk=$("#machine").value==="RK15";
- $("#variantWrap").hidden=!rk;
- $("#groups").textContent=rk?"請先選有風扇／無風扇":"讀取中…";
- if($("#machine").value&&!rk)loadGroups();
+ const rk=$("#machine").value==="RK15";$("#variantWrap").hidden=!rk;
+ if($("#machine").value&&selectedStation())await loadPreprocessItems();else $("#preprocessWrap").hidden=true;
 }
 $("#preprocess").onchange=()=>{preprocessItem=$("#preprocess").value;};
 $("#station").onchange=refreshWorkMode;
 
-$("#machine").onchange=()=>{variant="";group=null;preprocessItem="";hasPreprocess=false;document.querySelectorAll(".pick").forEach(x=>x.classList.remove("active"));refreshWorkMode();};
+$("#machine").onchange=()=>{variant="";group=null;preprocessItem="";document.querySelectorAll(".pick").forEach(x=>x.classList.remove("active"));refreshWorkMode();};
 
 document.querySelectorAll(".variant").forEach(b=>b.onclick=()=>{
- document.querySelectorAll(".variant").forEach(x=>x.classList.remove("active"));b.classList.add("active");variant=b.dataset.v;loadGroups();
+ document.querySelectorAll(".variant").forEach(x=>x.classList.remove("active"));b.classList.add("active");variant=b.dataset.v;loadPreprocessItems();
 });
 
-async function loadGroups(){
- let q=sb.from("process_groups").select("group_code,group_name").eq("machine_name",$("#machine").value).eq("active",true);
- q=$("#machine").value==="RK15"?q.eq("machine_variant",variant):q.is("machine_variant",null);
- const {data}=await q.order("sort_order").order("group_code");
- $("#groups").innerHTML="";
- for(const g of (data||[])){const b=document.createElement("button");b.type="button";b.className="pick";b.textContent=g.group_code;b.onclick=()=>{document.querySelectorAll("#groups .pick").forEach(x=>x.classList.remove("active"));b.classList.add("active");group=g};$("#groups").appendChild(b)}
- if(!(data||[]).length)$("#groups").textContent="尚未建立加工組";
-}
 
 let timer;
 $("#eno").oninput=()=>{
@@ -162,13 +120,12 @@ $("#form").onsubmit=async e=>{
  e.preventDefault();const msg=$("#msg");msg.hidden=false;
  if(!$("#ename").value){msg.className="msg err";msg.textContent="請先確認工號";return}
  if($("#machine").value==="RK15"&&!variant){msg.className="msg err";msg.textContent="請選有風扇或無風扇";return}
- if(usePreprocessMode()&&!preprocessItem){msg.className="msg err";msg.textContent="請選前置加工項目";return}
- if(!usePreprocessMode()&&!group){msg.className="msg err";msg.textContent="請選加工組";return}
+ if(!preprocessItem){msg.className="msg err";msg.textContent="請選前置加工項目";return}
  const s=JSON.parse($("#station").value);
- const row={employee_no:$("#eno").value.trim(),employee_name:$("#ename").value,order_no:$("#orderNo").value.trim(),machine_serial:$("#serial").value.trim()||null,work_area:$("#area").value,station_name:s.name,station_code:s.code||null,machine_model:$("#machine").value,machine_variant:variant||null,process_group_code:usePreprocessMode()?"前置加工":group.group_code,process_group_name:usePreprocessMode()?preprocessItem:(group.group_name||null),processing_name:usePreprocessMode()?preprocessItem:(group.group_name||group.group_code),part_name:usePreprocessMode()?preprocessItem:(group.group_name||group.group_code),part_no:null,work_type:usePreprocessMode()?"前置加工":s.name,quantity:Number($("#qty").value),remark:$("#remark").value.trim()||null};
+ const row={employee_no:$("#eno").value.trim(),employee_name:$("#ename").value,order_no:$("#orderNo").value.trim(),machine_serial:$("#serial").value.trim()||null,work_area:$("#area").value,station_name:s.name,station_code:s.code||null,machine_model:$("#machine").value,machine_variant:variant||null,process_group_code:"前置加工",process_group_name:preprocessItem,processing_name:preprocessItem,part_name:preprocessItem,part_no:null,work_type:"前置加工",quantity:Number($("#qty").value),remark:$("#remark").value.trim()||null};
  const {error}=await sb.from("work_records").insert([row]);
  msg.className="msg "+(error?"err":"ok");
- msg.textContent=error?error.message:(usePreprocessMode()?`✅ 儲存成功｜${row.machine_model}｜${row.station_code||row.station_name}｜${preprocessItem}｜數量 ${row.quantity}`:`✅ 儲存成功｜${row.machine_model}${row.machine_variant?`／${row.machine_variant}`:""}｜加工組 ${row.process_group_code}｜數量 ${row.quantity}`);
+ msg.textContent=error?error.message:`✅ 儲存成功｜${row.machine_model}｜${row.station_code||row.station_name}｜${preprocessItem}｜數量 ${row.quantity}`;
  if(!error){$("#qty").value="1";$("#remark").value=""}
 };
 </script>
