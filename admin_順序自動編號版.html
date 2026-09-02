@@ -1,0 +1,578 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>生產作業管理中心 v2.3</title>
+
+<style>
+:root{
+  --navy:#173f6b;
+  --green:#18834f;
+  --bg:#eef3f7;
+  --line:#d8e1e9;
+  --soft:#f7f9fb;
+  --text:#102a43;
+  --muted:#6b7b8d;
+}
+*{box-sizing:border-box}
+body{
+  font-family:"Microsoft JhengHei",sans-serif;
+  background:var(--bg);
+  margin:0;
+  color:var(--text);
+  font-size:14px;
+}
+header{
+  background:var(--navy);
+  color:#fff;
+  padding:14px 18px;
+}
+.wrap{
+  width:min(900px,calc(100% - 28px));
+  margin:auto;
+}
+header .wrap h2{
+  margin:0;
+  font-size:21px;
+  font-weight:800;
+}
+.card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+  margin:18px 0;
+  box-shadow:0 6px 18px rgba(23,63,107,.05);
+}
+.tabs{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+  padding-bottom:10px;
+  border-bottom:1px solid #e6ebef;
+}
+.tab{
+  padding:8px 11px;
+  border:0;
+  border-radius:8px;
+  background:#edf2f6;
+  color:var(--navy);
+  font-weight:800;
+  font-size:13px;
+}
+.tab.active{
+  background:var(--navy);
+  color:#fff;
+}
+h3{
+  font-size:18px;
+  margin:0 0 14px;
+}
+input,select{
+  width:100%;
+  padding:9px 10px;
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  font:inherit;
+  background:#fff;
+}
+button{font:inherit;cursor:pointer}
+.green{
+  background:var(--green);
+  color:#fff;
+  border:0;
+  border-radius:8px;
+  padding:9px 12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.grid5{
+  display:grid;
+  grid-template-columns:120px minmax(150px,1fr) 170px 100px auto;
+  gap:8px;
+  align-items:end;
+}
+.grid3{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 120px auto;
+  gap:8px;
+  align-items:end;
+}
+.gridg{
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) 145px auto;
+  gap:8px;
+  align-items:end;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+  font-size:13px;
+}
+th,td{
+  padding:8px 9px;
+  border-bottom:1px solid #e7ebef;
+  text-align:left;
+  vertical-align:middle;
+}
+th{
+  background:#f6f8fa;
+  color:#41566b;
+  font-weight:800;
+}
+td:last-child,th:last-child{text-align:right}
+.small{
+  padding:6px 9px;
+  border:0;
+  border-radius:7px;
+  background:#e9eff5;
+  color:var(--navy);
+  font-weight:700;
+}
+[hidden]{display:none!important}
+
+/* 生產統計：緊湊版 */
+#stats{
+  max-width:760px;
+  margin:0 auto;
+}
+#stats > div:first-child{
+  margin-bottom:8px;
+}
+#stats > div:first-child h3{
+  font-size:19px!important;
+}
+.stats-head{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:10px 0 16px;
+}
+.stat-card{
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:12px 14px;
+  background:#fafcfd;
+  min-height:82px;
+}
+.stat-label{
+  color:var(--muted);
+  font-size:12px;
+}
+.stat-value{
+  font-size:22px;
+  font-weight:900;
+  color:var(--navy);
+  margin-top:5px;
+  text-align:right;
+}
+.machine-card,
+.station-area{
+  border:1px solid var(--line);
+  border-radius:11px;
+  margin:10px 0;
+  overflow:hidden;
+  background:#fff;
+}
+.machine-title,
+.station-title{
+  background:#f5f8fa;
+  padding:10px 12px;
+  font-weight:900;
+  color:var(--navy);
+  font-size:14px;
+}
+.machine-body,
+.station-body{
+  padding:7px 12px 9px;
+}
+.machine-row,
+.station-row{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:6px 0;
+  border-bottom:1px solid #edf1f4;
+}
+.machine-row:last-child,
+.station-row:last-child{
+  border-bottom:0;
+}
+.machine-row strong,
+.station-row strong{
+  min-width:100px;
+  text-align:right;
+}
+.subtotal{
+  font-weight:900;
+  padding-top:8px;
+  margin-top:2px;
+  border-top:2px solid #e3e8ec;
+}
+.station-section{
+  margin-top:20px;
+}
+.station-section h3{
+  font-size:17px;
+  margin-bottom:8px;
+}
+.muted{
+  color:var(--muted);
+  font-size:12px;
+}
+
+@media(max-width:760px){
+  .wrap{width:min(100% - 18px,900px)}
+  .grid5,.grid3,.gridg,.stats-head{grid-template-columns:1fr}
+  #stats{max-width:none}
+  .stat-value{text-align:left}
+  table{font-size:12px}
+}
+
+.record-toolbar{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:end;margin-bottom:12px}
+.record-actions{display:flex;gap:6px;justify-content:flex-end}
+.danger{background:#b53a32;color:#fff;border:0;border-radius:7px;padding:6px 9px;font-weight:700}
+.edit{background:#e9eff5;color:#173f6b;border:0;border-radius:7px;padding:6px 9px;font-weight:700}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:18px;z-index:999}
+.modal{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:14px;padding:18px;box-shadow:0 18px 50px rgba(0,0,0,.22)}
+.modal h3{margin:0 0 12px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.secondary{background:#e9eff5;color:#173f6b;border:0;border-radius:8px;padding:9px 12px;font-weight:800}
+.notice{margin:10px 0;padding:9px 11px;border-radius:8px;background:#f5f8fa;color:#56697c}
+@media(max-width:760px){.record-toolbar,.modal-grid{grid-template-columns:1fr}}
+
+
+.search-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:10px;
+}
+.search-actions{
+  display:flex;
+  gap:8px;
+  margin-bottom:10px;
+}
+.table-wrap{overflow:auto}
+@media(max-width:800px){
+  .search-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){
+  .search-grid{grid-template-columns:1fr}
+}
+
+</style>
+</head>
+<body><header><div class="wrap"><h2>🔐 生產作業管理中心 v2.3</h2></div></header><main class="wrap">
+<div id="login" class="card"><h3>管理員登入</h3><form id="lf"><input id="email" type="email" placeholder="Email" required><input id="pwd" type="password" placeholder="密碼" required style="margin-top:10px"><button class="green" style="margin-top:12px">登入</button><div id="lm"></div></form></div>
+
+<div id="app" class="card" hidden>
+<div class="tabs"><button class="tab active" data-v="stats">📊 生產統計</button><button class="tab" data-v="search">作業紀錄查詢</button><button class="tab" data-v="emp">員工管理</button><button class="tab" data-v="mach">機種管理</button><button class="tab" data-v="pre">前置加工管理</button><button class="tab" data-v="case">CASE 組裝管理</button></div>
+
+<section id="stats"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h3 style="margin-bottom:4px">📊 今日生產統計</h3><div id="statsDate" class="muted"></div></div><button id="refreshStats" class="green" type="button">重新整理</button></div><div class="stats-head"><div class="stat-card"><div class="stat-label">今日總筆數</div><div id="totalRecords" class="stat-value">0 筆</div></div><div class="stat-card"><div class="stat-label">今日總數量</div><div id="totalQty" class="stat-value">0 PCS</div></div><div class="stat-card"><div class="stat-label">最後更新</div><div id="updatedAt" class="stat-value" style="font-size:22px">--:--</div></div></div><div id="machineStats"><div class="muted">統計讀取中…</div></div><div class="station-section"><h3>📍 今日站點統計</h3><div id="stationStats"><div class="muted">統計讀取中…</div></div></div></section>
+
+
+<section id="search" hidden>
+<h3>🔍 作業紀錄查詢</h3>
+
+<div class="search-grid">
+  <div>
+    <label>日期</label>
+    <input id="recordDate" type="date">
+  </div>
+  <div>
+    <label>訂單號碼</label>
+    <input id="filterOrder" placeholder="輸入訂單號碼">
+  </div>
+  <div>
+    <label>工號</label>
+    <input id="filterEmpNo" placeholder="輸入工號">
+  </div>
+  <div>
+    <label>姓名</label>
+    <input id="filterEmpName" placeholder="輸入姓名">
+  </div>
+  <div>
+    <label>機種</label>
+    <select id="filterMachine">
+      <option value="">全部機種</option>
+    </select>
+  </div>
+  <div>
+    <label>站點</label>
+    <select id="filterStation">
+      <option value="">全部站點</option>
+      <option>U-CASE</option>
+      <option>LCD CASE</option>
+      <option>LCD COVER</option>
+      <option>L1</option>
+      <option>L2</option>
+      <option>MB組裝1</option>
+      <option>MB組裝2</option>
+    </select>
+  </div>
+</div>
+
+<div class="search-actions">
+  <button id="searchBtn" class="green" type="button">查詢</button>
+  <button id="clearSearchBtn" class="secondary" type="button">清除條件</button>
+</div>
+
+<div id="recordMsg" class="notice">可單獨查詢，也可以同時設定多個條件。</div>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th>時間</th>
+  <th>工號／姓名</th>
+  <th>訂單</th>
+  <th>機種</th>
+  <th>類型</th>
+  <th>加工組</th>
+  <th>加工內容</th>
+  <th>站點</th>
+  <th>數量</th>
+  <th>操作</th>
+</tr>
+</thead>
+<tbody id="searchBody">
+<tr><td colspan="10">請設定查詢條件後按「查詢」</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+
+<section id="emp" hidden><h3>員工管理</h3><form id="ef" class="grid5"><input id="eNo" placeholder="工號" required><input id="eName" placeholder="姓名" required><input id="eStation" placeholder="主要站點（選填）"><select id="eActive"><option value="true">在職</option><option value="false">停用</option></select><button class="green">儲存員工</button></form><table><thead><tr><th>工號</th><th>姓名</th><th>主要站點</th><th>狀態</th><th>操作</th></tr></thead><tbody id="empBody"></tbody></table></section>
+
+<section id="mach" hidden><h3>機種管理</h3><form id="mf" class="grid3"><input id="mName" placeholder="機種名稱" required><select id="mActive"><option value="true">啟用</option><option value="false">停用</option></select><button class="green">新增／更新</button></form><table><thead><tr><th>機種</th><th>狀態</th><th>操作</th></tr></thead><tbody id="machBody"></tbody></table></section><section id="pre" hidden><h3>前置加工管理</h3><div class="notice">先選機種與站點，再維護該站點的前置加工項目。</div><form id="pf" class="grid5"><select id="pMachine" required><option value="">請選機種</option></select><div id="pVariantWrap" hidden><select id="pVariant"><option value="">請選加工類型</option><option>無風扇</option><option>有風扇</option></select></div><select id="pStation" required><option value="">請選站點</option><option>S070</option><option>S080</option><option>S090</option><option>S100</option><option>U-CASE</option><option>LCD CASE</option><option>LCD COVER</option></select><input id="pItem" placeholder="前置加工項目" required><input id="pSort" type="number" min="1" value="1"><button class="green">新增項目</button></form><div id="preSummary" class="notice">請先選擇機種與站點。</div><table><thead><tr><th>順序</th><th>加工內容</th><th>狀態</th><th>操作</th></tr></thead><tbody id="preBody"></tbody></table></section>
+<section id="case" hidden><h3>CASE 組裝管理</h3><div class="notice">先選機種與站點，再維護該站點的 CASE 組裝項目。</div><form id="cf" class="grid5"><select id="cMachine" required><option value="">請選機種</option></select><div id="cVariantWrap" hidden><select id="cVariant"><option value="">共用／不分類</option><option>無風扇</option><option>有風扇</option></select></div><select id="cStation" required><option value="">請選站點</option><option>S070</option><option>S080</option><option>S090</option><option>S100</option><option>U-CASE</option><option>LCD CASE</option><option>LCD COVER</option></select><input id="cItem" placeholder="CASE 組裝項目" required><input id="cSort" type="number" min="1" value="1"><button class="green">新增項目</button></form><div id="caseSummary" class="notice">請先選擇機種與站點。</div><table><thead><tr><th>順序</th><th>組裝內容</th><th>狀態</th><th>操作</th></tr></thead><tbody id="caseBody"></tbody></table></section>
+</div>
+<div id="editBackdrop" class="modal-backdrop" hidden>
+  <div class="modal">
+    <h3>✏️ 修改作業紀錄</h3>
+    <div class="notice">工號與姓名不在這裡修改；若人員輸入錯誤，建議刪除後重新建立。</div>
+    <div class="modal-grid">
+      <div><label>訂單號碼</label><input id="editOrder"></div>
+      <div><label>機器序號</label><input id="editSerial"></div>
+      <div><label>機種</label><select id="editMachine"></select></div>
+      <div id="editVariantWrap" hidden><label>加工類型</label><select id="editVariant"><option value="">請選擇</option><option>無風扇</option><option>有風扇</option></select></div>
+      <div><label>加工組</label><select id="editGroup"></select></div>
+      <div><label>數量</label><input id="editQty" type="number" min="1"></div>
+      <div style="grid-column:1/-1"><label>備註</label><input id="editRemark"></div>
+    </div>
+    <div id="editMsg"></div>
+    <div class="modal-actions">
+      <button id="cancelEdit" class="secondary" type="button">取消</button>
+      <button id="saveEdit" class="green" type="button">儲存修改</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<script type="module">
+import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const sb=createClient("https://dzyfbfenghatpewumfql.supabase.co","sb_publishable_v_1RNtLKIWOgTOmc5KyT5g_yUOtq-Yy"),$=s=>document.querySelector(s);
+
+function localDayRange(){const now=new Date();const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);const end=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,0,0);return {start:start.toISOString(),end:end.toISOString(),label:now.toLocaleDateString("zh-TW")}}
+async function loadStats(){const range=localDayRange();$("#statsDate").textContent=`今日：${range.label}`;$("#machineStats").innerHTML='<div class="muted">統計讀取中…</div>';$("#stationStats").innerHTML='<div class="muted">統計讀取中…</div>';const {data,error}=await sb.from("work_records").select("machine_model,machine_variant,process_group_code,quantity,created_at,work_area,station_name").gte("created_at",range.start).lt("created_at",range.end).order("created_at",{ascending:true});if(error){$("#machineStats").innerHTML=`<div style="color:#9b2c2c">讀取失敗：${error.message}</div>`;$("#stationStats").innerHTML=`<div style="color:#9b2c2c">讀取失敗：${error.message}</div>`;return}const rows=data||[];const totalQty=rows.reduce((s,r)=>s+(Number(r.quantity)||0),0);$("#totalRecords").textContent=rows.length+" 筆";$("#totalQty").textContent=totalQty.toLocaleString()+" PCS";$("#updatedAt").textContent=new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"});const map=new Map();for(const r of rows){const machine=r.machine_model||"未指定機種";const variant=r.machine_variant||"";const key=machine+"|||"+variant;if(!map.has(key))map.set(key,{machine,variant,groups:new Map(),subtotal:0,count:0});const obj=map.get(key);const group=r.process_group_code||"未指定";obj.groups.set(group,(obj.groups.get(group)||0)+(Number(r.quantity)||0));obj.subtotal+=(Number(r.quantity)||0);obj.count++}if(!map.size){$("#machineStats").innerHTML='<div class="muted">今天目前還沒有作業紀錄。</div>'}let html="";for(const obj of [...map.values()].sort((a,b)=>a.machine.localeCompare(b.machine,"zh-Hant")||a.variant.localeCompare(b.variant,"zh-Hant"))){html+=`<div class="machine-card"><div class="machine-title">${obj.machine}${obj.variant?`（${obj.variant}）`:""} <span class="muted" style="font-weight:400">｜${obj.count} 筆</span></div><div class="machine-body">`;for(const [g,qty] of [...obj.groups.entries()].sort((a,b)=>a[0].localeCompare(b[0],"zh-Hant"))){html+=`<div class="machine-row"><span>加工組 ${g}</span><strong>${qty.toLocaleString()} PCS</strong></div>`}html+=`<div class="machine-row subtotal"><span>小計</span><strong>${obj.subtotal.toLocaleString()} PCS</strong></div></div></div>`}if(html)$("#machineStats").innerHTML=html;const stationOrder={"上半材料":["U-CASE","LCD CASE","LCD COVER"],"下半材料":["L1","L2","MB組裝1","MB組裝2"]};const stationMap=new Map();for(const r of rows){const area=r.work_area||"其他";const st=r.station_name||"未指定站點";const key=area+"|||"+st;stationMap.set(key,(stationMap.get(key)||0)+(Number(r.quantity)||0))}let sh="";for(const area of ["上半材料","下半材料"]){let subtotal=0;sh+=`<div class="station-area"><div class="station-title">${area}</div><div class="station-body">`;for(const st of stationOrder[area]){const qty=stationMap.get(area+"|||"+st)||0;subtotal+=qty;sh+=`<div class="station-row"><span>${st}</span><strong>${qty.toLocaleString()} PCS</strong></div>`}sh+=`<div class="station-row subtotal"><span>小計</span><strong>${subtotal.toLocaleString()} PCS</strong></div></div></div>`}$("#stationStats").innerHTML=sh}
+$("#refreshStats").onclick=loadStats;
+async function verify(){const {data:{session}}=await sb.auth.getSession();if(!session)return;const {data}=await sb.from("admins").select("user_id,active").eq("user_id",session.user.id).eq("active",true).maybeSingle();if(data){$("#login").hidden=true;$("#app").hidden=false;loadStats();loadEmp();loadMach()}}
+$("#lf").onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$("#email").value.trim(),password:$("#pwd").value});$("#lm").textContent=error?"登入失敗":"";if(!error)verify()};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");["stats","search","emp","mach","pre","case"].forEach(id=>$("#"+id).hidden=id!==b.dataset.v);if(b.dataset.v==="stats")loadStats();if(b.dataset.v==="emp")loadEmp();if(b.dataset.v==="mach")loadMach();if(b.dataset.v==="pre"){loadPreMachines();loadPreItems();}if(b.dataset.v==="case"){loadCaseMachines();loadCaseItems();}});
+
+let currentRecords=[];
+let editingId=null;
+
+function dayRangeFromInput(){
+ const v=$("#recordDate").value;
+ if(!v)return null;
+ const [y,m,d]=v.split("-").map(Number);
+ const start=new Date(y,m-1,d,0,0,0,0);
+ const end=new Date(y,m-1,d+1,0,0,0,0);
+ return {start:start.toISOString(),end:end.toISOString()};
+}
+function esc(v){
+ const div=document.createElement("div");
+ div.textContent=String(v??"");
+ return div.innerHTML;
+}
+
+
+async function loadSearchMachineOptions(){
+  const {data}=await sb.from("machine_models")
+    .select("machine_name")
+    .eq("active",true)
+    .order("machine_name");
+
+  $("#filterMachine").innerHTML=
+    '<option value="">全部機種</option>'+
+    (data||[]).map(r=>`<option>${esc(r.machine_name)}</option>`).join("");
+}
+
+async function searchRecords(){
+  let qy=sb.from("work_records")
+    .select("id,created_at,employee_no,employee_name,order_no,machine_serial,machine_model,machine_variant,process_group_code,process_group_name,processing_name,part_name,work_area,station_name,station_code,quantity,remark")
+    .order("created_at",{ascending:false})
+    .limit(300);
+
+  const range=dayRangeFromInput();
+  if(range){
+    qy=qy.gte("created_at",range.start).lt("created_at",range.end);
+  }
+
+  const order=$("#filterOrder").value.trim();
+  const empNo=$("#filterEmpNo").value.trim();
+  const empName=$("#filterEmpName").value.trim();
+  const machine=$("#filterMachine").value;
+  const station=$("#filterStation").value;
+
+  if(order) qy=qy.ilike("order_no",`%${order}%`);
+  if(empNo) qy=qy.ilike("employee_no",`%${empNo}%`);
+  if(empName) qy=qy.ilike("employee_name",`%${empName}%`);
+  if(machine) qy=qy.eq("machine_model",machine);
+  if(station) qy=qy.eq("station_name",station);
+
+  const {data,error}=await qy;
+
+  if(error){
+    $("#recordMsg").textContent="查詢失敗："+error.message;
+    $("#searchBody").innerHTML='<tr><td colspan="10">查詢失敗</td></tr>';
+    return;
+  }
+
+  currentRecords=data||[];
+
+  $("#recordMsg").textContent=
+    `找到 ${currentRecords.length} 筆資料（最多顯示 300 筆）`;
+
+  $("#searchBody").innerHTML=currentRecords.length
+    ? currentRecords.map(r=>`<tr>
+      <td>${new Date(r.created_at).toLocaleString("zh-TW")}</td>
+      <td>${esc(r.employee_no)}<br><span class="muted">${esc(r.employee_name)}</span></td>
+      <td>${esc(r.order_no)}</td>
+      <td>${esc(r.machine_model)}</td>
+      <td>${esc(r.machine_variant || (r.process_group_code==="前置加工" ? "前置加工" : ""))}</td>
+      <td>${esc(r.process_group_code)}</td>
+      <td>${esc(r.processing_name || r.part_name || r.process_group_name || r.process_group_code || "")}</td>
+      <td>${esc(r.station_name)}${r.station_code?`<br><span class="muted">${esc(r.station_code)}</span>`:""}</td>
+      <td style="text-align:right"><strong>${Number(r.quantity||0).toLocaleString()}</strong></td>
+      <td>
+        <div class="record-actions">
+          <button class="edit" type="button" data-edit="${r.id}">修改</button>
+          <button class="danger" type="button" data-del="${r.id}">刪除</button>
+        </div>
+      </td>
+    </tr>`).join("")
+    : '<tr><td colspan="10">查無資料</td></tr>';
+
+  document.querySelectorAll("[data-edit]")
+    .forEach(b=>b.onclick=()=>openEdit(b.dataset.edit));
+
+  document.querySelectorAll("[data-del]")
+    .forEach(b=>b.onclick=()=>deleteRecord(b.dataset.del));
+}
+
+$("#searchBtn").onclick=searchRecords;
+
+$("#clearSearchBtn").onclick=()=>{
+  $("#recordDate").value="";
+  $("#filterOrder").value="";
+  $("#filterEmpNo").value="";
+  $("#filterEmpName").value="";
+  $("#filterMachine").value="";
+  $("#filterStation").value="";
+  $("#recordMsg").textContent="查詢條件已清除。";
+  $("#searchBody").innerHTML='<tr><td colspan="10">請設定查詢條件後按「查詢」</td></tr>';
+};
+
+$("#recordDate").value=new Date().toISOString().slice(0,10);
+loadSearchMachineOptions();
+
+async function fillEditMachines(selected){
+ const {data}=await sb.from("machine_models").select("machine_name").eq("active",true).order("machine_name");
+ $("#editMachine").innerHTML=(data||[]).map(r=>`<option ${r.machine_name===selected?"selected":""}>${esc(r.machine_name)}</option>`).join("");
+}
+async function fillEditGroups(machine,variant,selected){
+ let q=sb.from("process_groups").select("group_code,group_name").eq("machine_name",machine).eq("active",true);
+ q=machine==="RK15"?q.eq("machine_variant",variant):q.is("machine_variant",null);
+ const {data}=await q.order("sort_order").order("group_code");
+ $("#editGroup").innerHTML=(data||[]).map(g=>`<option value="${esc(g.group_code)}" ${g.group_code===selected?"selected":""}>${esc(g.group_code)}${g.group_name?`－${esc(g.group_name)}`:""}</option>`).join("");
+}
+async function openEdit(id){
+ const r=currentRecords.find(x=>String(x.id)===String(id));if(!r)return;
+ editingId=r.id;
+ await fillEditMachines(r.machine_model||"");
+ $("#editVariantWrap").hidden=r.machine_model!=="RK15";
+ $("#editVariant").value=r.machine_variant||"";
+ await fillEditGroups(r.machine_model||"",r.machine_variant||"",r.process_group_code||"");
+ $("#editOrder").value=r.order_no||"";
+ $("#editSerial").value=r.machine_serial||"";
+ $("#editQty").value=r.quantity||1;
+ $("#editRemark").value=r.remark||"";
+ $("#editMsg").textContent="";
+ $("#editBackdrop").hidden=false;
+}
+$("#editMachine").onchange=async()=>{
+ const rk=$("#editMachine").value==="RK15";
+ $("#editVariantWrap").hidden=!rk;
+ if(!rk)$("#editVariant").value="";
+ await fillEditGroups($("#editMachine").value,$("#editVariant").value,"");
+};
+$("#editVariant").onchange=async()=>fillEditGroups($("#editMachine").value,$("#editVariant").value,"");
+$("#cancelEdit").onclick=()=>{$("#editBackdrop").hidden=true;editingId=null};
+$("#saveEdit").onclick=async()=>{
+ if(!editingId)return;
+ const machine=$("#editMachine").value;
+ const variant=machine==="RK15"?$("#editVariant").value:null;
+ if(machine==="RK15"&&!variant){$("#editMsg").textContent="RK15 請選有風扇或無風扇。";return}
+ const groupCode=$("#editGroup").value;
+ const groupText=$("#editGroup").selectedOptions[0]?.textContent||groupCode;
+ const groupName=groupText.includes("－")?groupText.split("－").slice(1).join("－"):null;
+ const patch={
+   order_no:$("#editOrder").value.trim(),
+   machine_serial:$("#editSerial").value.trim()||null,
+   machine_model:machine,
+   machine_variant:variant,
+   process_group_code:groupCode,
+   process_group_name:groupName,
+   processing_name:groupName||groupCode,
+   part_name:groupName||groupCode,
+   quantity:Number($("#editQty").value),
+   remark:$("#editRemark").value.trim()||null,
+   updated_at:new Date().toISOString()
+ };
+ const {error}=await sb.from("work_records").update(patch).eq("id",editingId);
+ if(error){$("#editMsg").textContent="修改失敗："+error.message;return}
+ $("#editBackdrop").hidden=true;editingId=null;
+ await searchRecords();await loadStats();
+};
+async function deleteRecord(id){
+ const r=currentRecords.find(x=>String(x.id)===String(id));
+ const ok=confirm(`確定要刪除這筆紀錄嗎？\n\n${r?.employee_name||""}｜${r?.order_no||""}｜${r?.machine_model||""}｜${r?.process_group_code||""}｜${r?.quantity||0} PCS`);
+ if(!ok)return;
+ const {error}=await sb.from("work_records").delete().eq("id",id);
+ if(error){alert("刪除失敗："+error.message);return}
+ await searchRecords();await loadStats();
+}
+
+async function loadEmp(){const {data}=await sb.from("employees").select("employee_no,employee_name,primary_station,active").order("employee_no");$("#empBody").innerHTML=(data||[]).map(r=>`<tr><td>${r.employee_no}</td><td>${r.employee_name}</td><td>${r.primary_station??""}</td><td>${r.active?"在職":"停用"}</td><td><button class="small et" data-no="${r.employee_no}" data-a="${r.active}">${r.active?"停用":"啟用"}</button></td></tr>`).join("");document.querySelectorAll(".et").forEach(b=>b.onclick=async()=>{await sb.from("employees").update({active:b.dataset.a!=="true"}).eq("employee_no",b.dataset.no);loadEmp()})}
+$("#ef").onsubmit=async e=>{e.preventDefault();await sb.from("employees").upsert({employee_no:$("#eNo").value.trim(),employee_name:$("#eName").value.trim(),primary_station:$("#eStation").value.trim()||null,active:$("#eActive").value==="true"},{onConflict:"employee_no"});e.target.reset();loadEmp()};
+async function loadMach(){const {data}=await sb.from("machine_models").select("id,machine_name,active").order("machine_name");$("#machBody").innerHTML=(data||[]).map(r=>`<tr><td>${r.machine_name}</td><td>${r.active?"啟用":"停用"}</td><td><button class="small mt" data-id="${r.id}" data-a="${r.active}">${r.active?"停用":"啟用"}</button></td></tr>`).join("");document.querySelectorAll(".mt").forEach(b=>b.onclick=async()=>{await sb.from("machine_models").update({active:b.dataset.a!=="true"}).eq("id",b.dataset.id);loadMach()})}
+$("#mf").onsubmit=async e=>{e.preventDefault();await sb.from("machine_models").upsert({machine_name:$("#mName").value.trim(),active:$("#mActive").value==="true"},{onConflict:"machine_name"});e.target.reset();loadMach()};
+function preEsc(v){const d=document.createElement("div");d.textContent=String(v??"");return d.innerHTML}
+function syncPreVariant(){const rk=$("#pMachine").value==="RK15";$("#pVariantWrap").hidden=!rk;if(!rk)$("#pVariant").value=""}
+async function loadPreMachines(){const {data}=await sb.from("machine_models").select("machine_name").eq("active",true).order("machine_name");const old=$("#pMachine").value;$("#pMachine").innerHTML='<option value="">請選機種</option>'+(data||[]).map(r=>`<option>${preEsc(r.machine_name)}</option>`).join("");if([...$("#pMachine").options].some(o=>o.value===old))$("#pMachine").value=old;syncPreVariant()}
+async function loadPreItems(){const m=$("#pMachine").value,s=$("#pStation").value,v=m==="RK15"?$("#pVariant").value:"";if(!m||!s||(m==="RK15"&&!v)){ $("#preSummary").textContent=m==="RK15"&&!v?"RK15 請先選擇「無風扇」或「有風扇」。":"請先選擇機種與站點。";$("#preBody").innerHTML='<tr><td colspan="4">請完成上方條件選擇</td></tr>';return}let q=sb.from("preprocess_items").select("id,item_name,sort_order,active,machine_variant").eq("machine_name",m).eq("station_code",s);q=m==="RK15"?q.eq("machine_variant",v):q.is("machine_variant",null);const {data,error}=await q.order("sort_order").order("item_name");if(error){$("#preSummary").textContent="讀取失敗："+error.message;return}const rows=data||[];$("#pSort").value=rows.length?Math.max(...rows.map(r=>Number(r.sort_order)||0))+1:1;$("#preSummary").textContent=`${m}${v?` / ${v}`:""} / ${s}：共 ${rows.length} 項`;$("#preBody").innerHTML=rows.map(r=>`<tr><td>${r.sort_order??""}</td><td>${preEsc(r.item_name)}</td><td>${r.active?"啟用":"停用"}</td><td><button class="small pe" data-id="${r.id}" data-n="${encodeURIComponent(r.item_name)}" data-s="${r.sort_order||1}">編輯</button> <button class="small pt" data-id="${r.id}" data-a="${r.active}">${r.active?"停用":"啟用"}</button> <button class="danger pd" data-id="${r.id}">刪除</button></td></tr>`).join("")||'<tr><td colspan="4">尚未建立前置加工項目</td></tr>';document.querySelectorAll(".pe").forEach(b=>b.onclick=async()=>{let n=prompt("修改前置加工項目",decodeURIComponent(b.dataset.n));if(n===null||!n.trim())return;let so=prompt("順序",b.dataset.s);if(so===null)return;const {error}=await sb.from("preprocess_items").update({item_name:n.trim(),sort_order:Number(so)||1}).eq("id",b.dataset.id);if(error)alert("修改失敗："+error.message);else loadPreItems()});document.querySelectorAll(".pt").forEach(b=>b.onclick=async()=>{const {error}=await sb.from("preprocess_items").update({active:b.dataset.a!=="true"}).eq("id",b.dataset.id);if(error)alert("更新失敗："+error.message);else loadPreItems()});document.querySelectorAll(".pd").forEach(b=>b.onclick=async()=>{if(!confirm("確定刪除此項前置加工嗎？"))return;const {error}=await sb.from("preprocess_items").delete().eq("id",b.dataset.id);if(error)alert("刪除失敗："+error.message);else loadPreItems()})}
+$("#pMachine").onchange=()=>{syncPreVariant();loadPreItems()};$("#pVariant").onchange=loadPreItems;$("#pStation").onchange=loadPreItems;
+$("#pf").onsubmit=async e=>{e.preventDefault();const m=$("#pMachine").value,s=$("#pStation").value,n=$("#pItem").value.trim(),v=m==="RK15"?$("#pVariant").value:null;if(!m||!s||!n)return;if(m==="RK15"&&!v){alert("RK15 請先選擇無風扇或有風扇。");return}const {error}=await sb.from("preprocess_items").insert({machine_name:m,station_code:s,machine_variant:v,item_name:n,sort_order:Number($("#pSort").value)||1,active:true});if(error){alert("新增失敗："+error.message);return}$("#pItem").value="";loadPreItems()};
+
+function caseEsc(v){const d=document.createElement("div");d.textContent=String(v??"");return d.innerHTML}
+function syncCaseVariant(){const rk=$("#cMachine").value==="RK15";$("#cVariantWrap").hidden=!rk;if(!rk)$("#cVariant").value=""}
+async function loadCaseMachines(){const {data}=await sb.from("machine_models").select("machine_name").eq("active",true).order("machine_name");const old=$("#cMachine").value;$("#cMachine").innerHTML='<option value="">請選機種</option>'+(data||[]).map(r=>`<option>${caseEsc(r.machine_name)}</option>`).join("");if([...$("#cMachine").options].some(o=>o.value===old))$("#cMachine").value=old;syncCaseVariant()}
+async function loadCaseItems(){const m=$("#cMachine").value,s=$("#cStation").value,v=m==="RK15"?$("#cVariant").value:"";if(!m||!s){$("#caseSummary").textContent="請先選擇機種與站點。";$("#caseBody").innerHTML='<tr><td colspan="4">請完成上方條件選擇</td></tr>';return}let q=sb.from("case_assembly_items").select("id,item_name,sort_order,active,machine_variant").eq("machine_name",m).eq("station_code",s);q=(m==="RK15"&&v)?q.eq("machine_variant",v):q.is("machine_variant",null);const {data,error}=await q.order("sort_order").order("item_name");if(error){$("#caseSummary").textContent="讀取失敗："+error.message;return}const rows=data||[];$("#cSort").value=rows.length?Math.max(...rows.map(r=>Number(r.sort_order)||0))+1:1;$("#caseSummary").textContent=`${m}${v?` / ${v}`:""} / ${s}：共 ${rows.length} 項`;$("#caseBody").innerHTML=rows.map(r=>`<tr><td>${r.sort_order??""}</td><td>${caseEsc(r.item_name)}</td><td>${r.active?"啟用":"停用"}</td><td><button class="small ce" data-id="${r.id}" data-n="${encodeURIComponent(r.item_name)}" data-s="${r.sort_order||1}">編輯</button> <button class="small ct" data-id="${r.id}" data-a="${r.active}">${r.active?"停用":"啟用"}</button> <button class="danger cd" data-id="${r.id}">刪除</button></td></tr>`).join("")||'<tr><td colspan="4">尚未建立 CASE 組裝項目</td></tr>';document.querySelectorAll(".ce").forEach(b=>b.onclick=async()=>{let n=prompt("修改 CASE 組裝項目",decodeURIComponent(b.dataset.n));if(n===null||!n.trim())return;let so=prompt("順序",b.dataset.s);if(so===null)return;const {error}=await sb.from("case_assembly_items").update({item_name:n.trim(),sort_order:Number(so)||1}).eq("id",b.dataset.id);if(error)alert("修改失敗："+error.message);else loadCaseItems()});document.querySelectorAll(".ct").forEach(b=>b.onclick=async()=>{const {error}=await sb.from("case_assembly_items").update({active:b.dataset.a!=="true"}).eq("id",b.dataset.id);if(error)alert("更新失敗："+error.message);else loadCaseItems()});document.querySelectorAll(".cd").forEach(b=>b.onclick=async()=>{if(!confirm("確定刪除此項 CASE 組裝嗎？"))return;const {error}=await sb.from("case_assembly_items").delete().eq("id",b.dataset.id);if(error)alert("刪除失敗："+error.message);else loadCaseItems()})}
+$("#cMachine").onchange=()=>{syncCaseVariant();loadCaseItems()};$("#cVariant").onchange=loadCaseItems;$("#cStation").onchange=loadCaseItems;
+$("#cf").onsubmit=async e=>{e.preventDefault();const m=$("#cMachine").value,s=$("#cStation").value,n=$("#cItem").value.trim(),v=m==="RK15"?($("#cVariant").value||null):null;if(!m||!s||!n)return;const {error}=await sb.from("case_assembly_items").insert({machine_name:m,station_code:s,machine_variant:v,item_name:n,sort_order:Number($("#cSort").value)||1,active:true});if(error){alert("新增失敗："+error.message);return}$("#cItem").value="";loadCaseItems()};
+
+verify();
+</script></body></html>
