@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>生產作業紀錄系統</title>
+<style>
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+body{margin:0;font-family:"Microsoft JhengHei",sans-serif;background:#eef3f7;color:#102a43}
+header{background:#173f6b;color:#fff;padding:18px}
+.wrap{width:min(1180px,calc(100% - 28px));margin:auto}
+.head{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.admin{color:#fff;text-decoration:none;border:1px solid #8aa6c0;padding:10px 14px;border-radius:10px}
+.card{background:#fff;border-radius:17px;padding:20px;margin:18px 0;box-shadow:0 8px 20px rgba(23,63,107,.06)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+label{display:block;font-weight:800;margin-bottom:7px}
+input,select{display:block;max-width:100%;min-width:0;width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.pick{padding:11px 16px;border:1px solid #9db3c8;border-radius:10px;background:#fff;color:#173f6b;font-weight:800}
+.pick.active{background:#173f6b;color:#fff}
+.multi-select{position:relative}
+.multi-toggle{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#102a43;font:inherit;text-align:left;display:flex;justify-content:space-between;align-items:center}
+.multi-toggle::after{content:"▼";font-size:11px;color:#64748b}
+.multi-menu{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 5px);max-height:260px;overflow:auto;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 10px 24px rgba(15,23,42,.12);padding:6px}
+.pre-option{display:flex;align-items:center;gap:9px;padding:10px;border-radius:8px;font-weight:700;cursor:pointer}
+.pre-option:hover{background:#f1f5f9}
+.pre-option input{width:auto;margin:0;accent-color:#173f6b}
+.selected-items{margin-top:12px;display:grid;gap:9px}
+.selected-row{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:10px;align-items:center;padding:10px 12px;background:#f7f9fb;border:1px solid #d8e1e9;border-radius:10px}
+.selected-row .item-name{font-weight:800}
+.selected-row input{padding:9px 10px}
+@media(max-width:520px){.selected-row{grid-template-columns:minmax(0,1fr) 95px}}
+.submit{width:100%;padding:14px;border:0;border-radius:10px;background:#18834f;color:#fff;font-size:18px;font-weight:900}
+.msg{margin-top:10px;padding:10px;border-radius:8px}
+.ok{background:#e8f7ef;color:#176c47} .err{background:#fdebea;color:#9b2c2c}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="wrap head"><h2>🏭 生產作業紀錄系統</h2><a class="admin" href="admin.html">🔐 管理員登入</a></div></header>
+<main class="wrap">
+<form id="form">
+<div class="card"><h3>① 作業人員</h3><div class="grid">
+<div><label>工號 *</label><input id="eno" required autofocus></div>
+<div><label>姓名</label><input id="ename" readonly placeholder="輸入工號後自動帶出"></div>
+</div><div id="eh"></div></div>
+
+<div class="card"><h3>② 訂單資訊</h3><div class="grid">
+<div><label>訂單號碼 *</label><input id="orderNo" required></div>
+<div><label>訂單數量 *</label><input id="orderQty" type="number" min="1" required placeholder="請輸入訂單數量"></div>
+<div><label>機器序號（選填）</label><input id="serial"></div>
+</div></div>
+
+<div class="card"><h3>③ 作業區域與站點</h3><div class="grid">
+<div><label>作業區域 *</label><select id="area" required><option value="">請選擇</option><option>上半</option><option>下半</option></select></div>
+<div><label>作業站點 *（可複選）</label><div class="multi-select"><button id="stationToggle" class="multi-toggle" type="button" disabled>請先選作業區域</button><div id="stationMenu" class="multi-menu" hidden></div></div><div id="stationHint" style="margin-top:7px;color:#64748b"></div></div>
+</div></div>
+
+<div class="card"><h3>④ 機種與作業內容</h3><label>作業類型 *</label><div class="btns" style="margin-bottom:16px"><button type="button" class="pick worktype active" data-type="前置加工">前置加工</button><button type="button" class="pick worktype" data-type="CASE組裝">CASE 組裝</button></div><label>機種 *</label><select id="machine" required><option value="">讀取中…</option></select>
+<div id="variantWrap" hidden style="margin-top:16px">
+<label>加工類型 *</label>
+<div class="btns"><button type="button" class="pick variant" data-v="無風扇">無風扇</button><button type="button" class="pick variant" data-v="有風扇">有風扇</button></div>
+</div>
+<div id="preprocessWrap" hidden style="margin-top:16px"><label>前置加工項目 *（可複選）</label>
+<div class="multi-select">
+<button id="preprocessToggle" class="multi-toggle" type="button">請選擇前置加工項目</button>
+<div id="preprocess" class="multi-menu" hidden></div>
+</div>
+<div id="preprocessHint" style="margin-top:7px;color:#64748b"></div><div id="selectedPreprocess" class="selected-items"></div></div><div id="caseWrap" hidden style="margin-top:16px"><label>CASE 組裝項目 *（可複選）</label><div class="multi-select"><button id="caseToggle" class="multi-toggle" type="button">請選擇 CASE 組裝項目</button><div id="caseMenu" class="multi-menu" hidden></div></div><div id="caseHint" style="margin-top:7px;color:#64748b"></div><div id="selectedCase" class="selected-items"></div></div>
+
+</div>
+
+<div class="card"><h3>⑤ 備註</h3>
+<div><label>備註（選填）</label><input id="remark"></div>
+</div>
+
+<div class="card"><button id="submitBtn" class="submit">儲存作業紀錄</button><div id="msg" hidden></div></div>
+</form>
+</main>
+<script type="module">
+import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+const sb=createClient("https://dzyfbfenghatpewumfql.supabase.co","sb_publishable_v_1RNtLKIWOgTOmc5KyT5g_yUOtq-Yy"),$=s=>document.querySelector(s);
+const stations={"上半":[["U-CASE",""],["LCD CASE",""],["LCD COVER",""]],"下半":[["L1","S070"],["L2","S080"],["MB組裝1","S090"],["MB組裝2","S100"]]};
+let variant="",group=null,preprocessItems=[],preprocessQty={},hasPreprocess=false,workType="前置加工",caseItems=[],caseQty={},selectedStations=[],multiSelections={};
+
+async function loadMachines(){
+ const {data}=await sb.from("machine_models").select("machine_name").eq("active",true).order("machine_name");
+ $("#machine").innerHTML='<option value="">請選擇機種</option>'+(data||[]).map(r=>`<option>${r.machine_name}</option>`).join("");
+}
+loadMachines();
+
+function updateStationToggle(){const n=selectedStations.length;$("#stationToggle").textContent=n?`已選 ${n} 個站點：${selectedStations.map(s=>s.code?`${s.name}（${s.code}）`:s.name).join("、")}`:"請選擇站點"}
+$("#stationToggle").onclick=()=>{if(!$("#stationToggle").disabled)$("#stationMenu").hidden=!$("#stationMenu").hidden};
+$("#area").onchange=()=>{const a=$("#area").value;selectedStations=[];$("#stationMenu").hidden=true;$("#stationMenu").innerHTML=(stations[a]||[]).map(([n,c])=>`<label class="pre-option"><input type="checkbox" class="stationcheck" data-name="${n}" data-code="${c}"><span>${c?`${n}（${c}）`:n}</span></label>`).join("");$("#stationToggle").disabled=!a;$("#stationHint").textContent=a?"可同時勾選一個以上站點":"";updateStationToggle();document.querySelectorAll(".stationcheck").forEach(c=>c.onchange=()=>{selectedStations=[...document.querySelectorAll(".stationcheck:checked")].map(x=>({name:x.dataset.name,code:x.dataset.code}));updateStationToggle();refreshWorkMode()});refreshWorkMode()};
+function selectedStation(){return selectedStations.length===1?selectedStations[0]:null}
+function usePreprocessMode(){return hasPreprocess;}
+function updatePreprocessToggle(){
+ const n=preprocessItems.length;
+ $("#preprocessToggle").textContent=n?`已選 ${n} 項：${preprocessItems.join("、")}`:"請選擇前置加工項目";
+ const box=$("#selectedPreprocess");
+ if(!box)return;
+ box.innerHTML=preprocessItems.map((item,i)=>`<div class="selected-row"><div class="item-name">${String(item).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</div><div><input class="itemQty" data-item="${encodeURIComponent(item)}" type="number" min="1" value="${Number(preprocessQty[item]||1)}" required aria-label="${String(item).replace(/"/g,"&quot;")} 數量"></div></div>`).join("");
+ document.querySelectorAll(".itemQty").forEach(inp=>inp.oninput=()=>{preprocessQty[decodeURIComponent(inp.dataset.item)]=Number(inp.value)||0});
+}
+$("#preprocessToggle").onclick=()=>{$("#preprocess").hidden=!$("#preprocess").hidden};
+document.addEventListener("click",e=>{
+ if(!e.target.closest(".multi-select")){$("#preprocess").hidden=true;$("#caseMenu").hidden=true;$("#stationMenu").hidden=true;}
+});
+
+async function loadPreprocessItems(){$("#preprocessToggle").parentElement.hidden=false;$("#preprocessWrap").querySelector(":scope > label").hidden=false;$("#preprocessToggle").hidden=false;
+ preprocessItems=[];hasPreprocess=false;
+ $("#preprocess").hidden=true;$("#preprocess").innerHTML='<div style="padding:10px;color:#64748b">讀取中…</div>';$("#preprocessHint").textContent="";updatePreprocessToggle();
+ const s=selectedStation();if(!$("#machine").value||!s)return;
+ let q=sb.from("preprocess_items").select("item_name,sort_order,machine_variant").eq("machine_name",$("#machine").value).eq("station_code",s.code).eq("active",true);
+ const machine=$("#machine").value;
+ if(machine==="RK15"){
+   if(!variant){
+     $("#preprocessWrap").hidden=true;
+     $("#preprocess").innerHTML="";
+     $("#preprocessHint").textContent="";updatePreprocessToggle();
+     return;
+   }
+   q=q.eq("machine_variant",variant);
+ }else{
+   q=q.is("machine_variant",null);
+ }
+ const {data,error}=await q.order("sort_order").order("item_name");
+ $("#preprocessWrap").hidden=false;
+ if(error){$("#preprocess").innerHTML='<div style="color:#9b2c2c">讀取失敗</div>';$("#preprocessHint").textContent=error.message;return}
+ hasPreprocess=!!(data||[]).length;
+ $("#preprocess").innerHTML=(data||[]).map((r,i)=>`<label class="pre-option"><input type="checkbox" class="precheck" value="${String(r.item_name).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}"><span>${String(r.item_name).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</span></label>`).join("");
+ $("#preprocessHint").textContent=hasPreprocess?`目前共有 ${(data||[]).length} 項前置加工，可同時勾選多項`:"此機種／站點尚未建立前置加工項目";
+ document.querySelectorAll(".precheck").forEach(c=>c.onchange=()=>{
+ const selected=[...document.querySelectorAll(".precheck:checked")].map(x=>x.value);
+ selected.forEach(item=>{if(!preprocessQty[item])preprocessQty[item]=Number($("#orderQty").value)||1});
+ Object.keys(preprocessQty).forEach(item=>{if(!selected.includes(item))delete preprocessQty[item]});
+ preprocessItems=selected;updatePreprocessToggle();
+});
+}
+function updateCaseToggle(){const n=caseItems.length;$("#caseToggle").textContent=n?`已選 ${n} 項：${caseItems.join("、")}`:"請選擇 CASE 組裝項目";$("#selectedCase").innerHTML=caseItems.map(item=>`<div class="selected-row"><div class="item-name">${item}</div><div><input class="caseItemQty" data-item="${encodeURIComponent(item)}" type="number" min="1" value="${Number(caseQty[item]||1)}" required></div></div>`).join("");document.querySelectorAll(".caseItemQty").forEach(i=>i.oninput=()=>caseQty[decodeURIComponent(i.dataset.item)]=Number(i.value)||0)}
+$("#caseToggle").onclick=()=>$("#caseMenu").hidden=!$("#caseMenu").hidden;
+async function loadCaseItems(){$("#caseToggle").parentElement.hidden=false;$("#caseWrap").querySelector(":scope > label").hidden=false;$("#caseToggle").hidden=false;caseItems=[];caseQty={};updateCaseToggle();const s=selectedStation();$("#caseMenu").hidden=true;$("#caseHint").textContent="";if(!$("#machine").value||!s)return;let q=sb.from("case_assembly_items").select("item_name,sort_order,machine_variant").eq("machine_name",$("#machine").value).eq("station_code",s.code).eq("active",true);const machine=$("#machine").value;if(machine==="RK15"){if(!variant){$("#caseWrap").hidden=true;return}q=q.or(`machine_variant.is.null,machine_variant.eq.${variant}`)}else q=q.is("machine_variant",null);const {data,error}=await q.order("sort_order").order("item_name");$("#caseWrap").hidden=false;if(error){$("#caseHint").textContent=error.message;return}$("#caseMenu").innerHTML=(data||[]).map(r=>`<label class="pre-option"><input type="checkbox" class="casecheck" value="${r.item_name}"><span>${r.item_name}</span></label>`).join("");$("#caseHint").textContent=(data||[]).length?`目前共有 ${(data||[]).length} 項 CASE 組裝，可同時勾選多項`:"此機種／站點尚未建立 CASE 組裝項目";document.querySelectorAll(".casecheck").forEach(c=>c.onchange=()=>{const s=[...document.querySelectorAll(".casecheck:checked")].map(x=>x.value);s.forEach(x=>{if(!caseQty[x])caseQty[x]=Number($("#orderQty").value)||1});Object.keys(caseQty).forEach(x=>{if(!s.includes(x))delete caseQty[x]});caseItems=s;updateCaseToggle()})}
+async function loadMultiStationItems(table,type){multiSelections={};const host=type==="前置加工"?$("#selectedPreprocess"):$("#selectedCase");host.innerHTML="";for(const s of selectedStations){let q=sb.from(table).select("item_name,sort_order,machine_variant").eq("machine_name",$("#machine").value).eq("station_code",s.code).eq("active",true);if($("#machine").value==="RK15"){if(type==="前置加工")q=q.eq("machine_variant",variant);else q=q.or(`machine_variant.is.null,machine_variant.eq.${variant}`)}else q=q.is("machine_variant",null);const {data,error}=await q.order("sort_order").order("item_name");const key=s.code||s.name;multiSelections[key]={station:s,items:{}};const box=document.createElement("div");box.className="card";box.style.cssText="margin:10px 0;padding:14px";box.innerHTML=`<div style="font-weight:900;margin-bottom:8px">${s.name}${s.code?`（${s.code}）`:""}</div>`+(error?`<div>讀取失敗：${error.message}</div>`:(data||[]).length?(data||[]).map(r=>`<label class="pre-option"><input type="checkbox" class="msItem" data-key="${key}" data-item="${encodeURIComponent(r.item_name)}"><span>${r.item_name}</span></label><div class="msQtyWrap" data-key="${key}" data-item="${encodeURIComponent(r.item_name)}" hidden><input class="msQty" data-key="${key}" data-item="${encodeURIComponent(r.item_name)}" type="number" min="1" value="${Number($("#orderQty").value)||1}" style="margin:0 0 8px 32px;width:110px"></div>`).join(""):`<div style="color:#64748b">此站點尚未建立${type}項目</div>`);host.appendChild(box)}document.querySelectorAll(".msItem").forEach(c=>c.onchange=()=>{const k=c.dataset.key,i=decodeURIComponent(c.dataset.item);const w=[...document.querySelectorAll(".msQtyWrap")].find(x=>x.dataset.key===k&&x.dataset.item===c.dataset.item);if(c.checked)multiSelections[k].items[i]=Number($("#orderQty").value)||1;else delete multiSelections[k].items[i];if(w)w.hidden=!c.checked});document.querySelectorAll(".msQty").forEach(i=>i.oninput=()=>multiSelections[i.dataset.key].items[decodeURIComponent(i.dataset.item)]=Number(i.value)||0)}
+async function refreshWorkMode(){group=null;preprocessItems=[];preprocessQty={};hasPreprocess=false;caseItems=[];caseQty={};$("#preprocessWrap").hidden=true;$("#caseWrap").hidden=true;const rk=$("#machine").value==="RK15";$("#variantWrap").hidden=!rk;if(!$("#machine").value||!selectedStations.length)return;if(rk&&!variant)return;if(selectedStations.length===1){if(workType==="前置加工"){$("#preprocessWrap").hidden=false;$("#preprocessToggle").parentElement.hidden=true;$("#preprocessWrap").querySelector(":scope > label").hidden=true;$("#preprocessHint").textContent="請直接勾選加工項目與數量。";await loadMultiStationItems("preprocess_items","前置加工")}else{$("#caseWrap").hidden=false;$("#caseToggle").parentElement.hidden=true;$("#caseWrap").querySelector(":scope > label").hidden=true;$("#caseHint").textContent="請直接勾選組裝項目與數量。";await loadMultiStationItems("case_assembly_items","CASE組裝")}return}if(workType==="前置加工"){$("#preprocessWrap").hidden=false;$("#preprocessToggle").parentElement.hidden=true;$("#preprocessWrap").querySelector(":scope > label").hidden=true;$("#preprocessHint").textContent="已選多個站點，請在各站點分別勾選加工項目與數量。";await loadMultiStationItems("preprocess_items","前置加工")}else{$("#caseWrap").hidden=false;$("#caseToggle").parentElement.hidden=true;$("#caseWrap").querySelector(":scope > label").hidden=true;$("#caseHint").textContent="已選多個站點，請在各站點分別勾選組裝項目與數量。";await loadMultiStationItems("case_assembly_items","CASE組裝")}}
+document.querySelectorAll(".worktype").forEach(b=>b.onclick=()=>{document.querySelectorAll(".worktype").forEach(x=>x.classList.remove("active"));b.classList.add("active");workType=b.dataset.type;refreshWorkMode()});
+
+
+$("#machine").onchange=()=>{variant="";group=null;preprocessItems=[];preprocessQty={};document.querySelectorAll(".variant").forEach(x=>x.classList.remove("active"));refreshWorkMode();};
+
+document.querySelectorAll(".variant").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll(".variant").forEach(x=>x.classList.remove("active"));b.classList.add("active");variant=b.dataset.v;refreshWorkMode();
+});
+
+
+let timer;
+$("#eno").oninput=()=>{
+ clearTimeout(timer);$("#ename").value="";const no=$("#eno").value.trim();if(!no)return;
+ timer=setTimeout(async()=>{const {data}=await sb.from("employees").select("employee_name").eq("employee_no",no).eq("active",true).maybeSingle();$("#ename").value=data?data.employee_name:"";$("#eh").textContent=data?"":"查無此工號，請聯絡管理員。"},200);
+};
+
+$("#orderQty").onchange=()=>{const q=Number($("#orderQty").value);if(!q||q<1)return;preprocessItems.forEach(item=>preprocessQty[item]=q);caseItems.forEach(item=>caseQty[item]=q);Object.values(multiSelections).forEach(g=>Object.keys(g.items).forEach(item=>g.items[item]=q));document.querySelectorAll(".itemQty,.caseItemQty,.msQty").forEach(i=>i.value=q)};
+
+$("#form").onsubmit=async e=>{e.preventDefault();const msg=$("#msg");msg.hidden=false;if(!$("#ename").value){msg.className="msg err";msg.textContent="請先確認工號";return}if(!Number($("#orderQty").value)||Number($("#orderQty").value)<1){msg.className="msg err";msg.textContent="請輸入正確的訂單數量";return}if(!selectedStations.length){msg.className="msg err";msg.textContent="請至少選擇一個作業站點";return}if($("#machine").value==="RK15"&&!variant){msg.className="msg err";msg.textContent="請選有風扇或無風扇";return}const common={employee_no:$("#eno").value.trim(),employee_name:$("#ename").value,order_no:$("#orderNo").value.trim(),machine_serial:$("#serial").value.trim()||null,work_area:$("#area").value,machine_model:$("#machine").value,machine_variant:variant||null,part_no:null,remark:$("#remark").value.trim()||null};let rows=[];if(selectedStations.length>1){for(const k of Object.keys(multiSelections)){const s=multiSelections[k].station;for(const [item,qty] of Object.entries(multiSelections[k].items)){if(!Number(qty)||Number(qty)<1){msg.className="msg err";msg.textContent=`請填寫「${s.code||s.name}－${item}」的正確數量`;return}rows.push({...common,station_name:s.name,station_code:s.code||null,process_group_code:workType,process_group_name:item,processing_name:item,part_name:item,work_type:workType,quantity:Number(qty)})}}if(!rows.length){msg.className="msg err";msg.textContent=`請至少勾選一個${workType}項目`;return}}else{const s=selectedStations[0],base={...common,station_name:s.name,station_code:s.code||null};if(workType==="前置加工"){if(!preprocessItems.length){msg.className="msg err";msg.textContent="請至少勾選一個前置加工項目";return}for(const item of preprocessItems){if(!Number(preprocessQty[item])||Number(preprocessQty[item])<1){msg.className="msg err";msg.textContent=`請填寫「${item}」的正確數量`;return}}rows=preprocessItems.map(item=>({...base,process_group_code:"前置加工",process_group_name:item,processing_name:item,part_name:item,work_type:"前置加工",quantity:Number(preprocessQty[item])}))}else{if(!caseItems.length){msg.className="msg err";msg.textContent="請至少勾選一個 CASE 組裝項目";return}for(const item of caseItems){if(!Number(caseQty[item])||Number(caseQty[item])<1){msg.className="msg err";msg.textContent=`請填寫「${item}」的正確數量`;return}}rows=caseItems.map(item=>({...base,process_group_code:"CASE組裝",process_group_name:item,processing_name:item,part_name:item,work_type:"CASE組裝",quantity:Number(caseQty[item])}))}}const {error}=await sb.from("work_records").insert(rows);msg.className="msg "+(error?"err":"ok");msg.textContent=error?error.message:`✅ 儲存成功｜${common.machine_model}｜${selectedStations.length} 個站點｜${workType}｜${rows.length} 筆`;if(!error){$("#remark").value="";await refreshWorkMode()}};
+</script>
+</body></html>
